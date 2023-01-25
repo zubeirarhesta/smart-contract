@@ -2,3 +2,7 @@
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
 	branch = v1.3.0
+[submodule "lib/erc721A"]
+	path = lib/erc721A
+	url = https://github.com/chiru-labs/erc721A
+	branch = v4.2.3
