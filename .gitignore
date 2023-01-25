@@ -1,6 +1,9 @@
 # Compiler files
 cache/
 out/
+# Foundry
+foundry-out
+foundry-cache
 
 # Ignores development broadcast logs
 !/broadcast
