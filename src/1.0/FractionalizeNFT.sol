@@ -136,7 +136,7 @@ contract FractionalizeNFT is IERC721Receiver {
     //required function for ERC721
     function onERC721Received(
         address,
-        address from,
+        address /* from, */,
         uint256,
         bytes calldata
     ) external pure override returns (bytes4) {
