@@ -1,9 +1,12 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+
 contract FractionToken is ERC20, ERC20Burnable {
     address public NFTAddress;
     uint256 public NFTId;
@@ -15,20 +18,31 @@ contract FractionToken is ERC20, ERC20Burnable {
     address[] tokenOwners;
     mapping(address => bool) isHolding;
 
-    constructor(address _NFTAddress, uint256  _NFTId, address _NFTOwner, uint256  _royaltyPercentage, uint256  _supply, string memory _tokenName, string memory _tokenTicker) ERC20(_tokenName, _tokenTicker) {
+    constructor(
+        address _NFTAddress,
+        uint256 _NFTId,
+        address _NFTOwner,
+        uint256 _royaltyPercentage,
+        uint256 _supply,
+        string memory _tokenName,
+        string memory _tokenTicker
+    ) ERC20(_tokenName, _tokenTicker) {
         NFTAddress = _NFTAddress;
         NFTId = _NFTId;
         NFTOwner = _NFTOwner;
         RoyaltyPercentage = _royaltyPercentage;
-        
+
         ContractDeployer = msg.sender;
-        
+
         _mint(_NFTOwner, _supply);
     }
 
-    function transfer(address to, uint256 amount) override public returns (bool) {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public override returns (bool) {
         //calculate royalty fee
-        uint royaltyFee = amount * RoyaltyPercentage / 100;
+        uint royaltyFee = (amount * RoyaltyPercentage) / 100;
         uint afterRoyaltyFee = amount - royaltyFee;
         address owner = _msgSender();
 
@@ -37,8 +51,8 @@ contract FractionToken is ERC20, ERC20Burnable {
         //send rest to receiver
         _transfer(owner, to, afterRoyaltyFee);
 
-       // addNewUserRemoveOld(to, owner);
-        
+        // addNewUserRemoveOld(to, owner);
+
         return true;
     }
 
@@ -51,7 +65,7 @@ contract FractionToken is ERC20, ERC20Burnable {
         _spendAllowance(from, spender, amount);
 
         //calculate royalty fee
-        uint royaltyFee = amount * RoyaltyPercentage / 100;
+        uint royaltyFee = (amount * RoyaltyPercentage) / 100;
         uint afterRoyaltyFee = amount - royaltyFee;
 
         //send royalty fee to owner
@@ -67,12 +81,15 @@ contract FractionToken is ERC20, ERC20Burnable {
     }
 
     function updateNFTOwner(address _newOwner) public {
-        require(msg.sender == ContractDeployer, "Only contract deployer can call this function");
+        require(
+            msg.sender == ContractDeployer,
+            "Only contract deployer can call this function"
+        );
 
         NFTOwner = _newOwner;
     }
 
-    function returnTokenOwners() public view returns(address[] memory) {
+    function returnTokenOwners() public view returns (address[] memory) {
         return tokenOwners;
     }
 }
