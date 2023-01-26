@@ -1,4 +1,7 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.17;
+
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
@@ -111,7 +114,7 @@ contract FractionalizeNFT is IERC721Receiver {
 
     function withdrawNftNotFractionalized(
         address _NftContract,
-        address _NftId
+        uint256 _NftId
     ) public {
         uint256 index = NftIndex[_NftContract][_NftId];
         require(
