@@ -17,7 +17,7 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     // 3. staking, dan
     // 4. transfer ownership - selesai
     // Fitur:
-    // 1. Berapa jumlah token yang sudah terjual --> getTotalSupply() - selesai
+    // 1. Berapa jumlah token yang sudah terjual --> getSoldTokens() - selesai
     // 2. Mengubah harga token --> setPrice(uint256 price)
     // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner)
     // 4. Staking token untuk memberikan token rewards
@@ -27,12 +27,13 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     mapping(address => mapping(address => uint256)) private allowances;
 
     address[] private s_accounts;
-    uint256 s_initialSupply = 5000000;
-    string private _name = "SoonanTsoor";
-    string private _symbol = "SNSR";
+    uint256 private immutable i_initialSupply = 5000000;
+    string private constant NAME = "SoonanTsoor";
+    string private constant SYMBOL = "SNSR";
+    uint256 s_soldToken;
 
-    constructor() ERC20(_name, _symbol) {
-        _mint(msg.sender, s_initialSupply);
+    constructor() ERC20(NAME, SYMBOL) {
+        _mint(msg.sender, i_initialSupply);
     }
 
     function pause() public onlyOwner {
@@ -55,8 +56,9 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         address from,
         address to,
         uint256 amount
-    ) public onlyOwner {
+    ) public onlyOwner returns (bool, uint256) {
         _transfer(from, to, amount);
+        return (true, setSoldTokens());
     }
 
     function transferOwnershipSNSR(address newOwner) public onlyOwner {
@@ -71,9 +73,18 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    function setSoldTokens() private returns (uint256) {
+        s_soldToken = i_initialSupply - balanceOf(msg.sender);
+        return s_soldToken;
+    }
+
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
     function getTotalSupply() public view returns (uint256) {
         return totalSupply();
+    }
+
+    function getSoldTokens() public view returns (uint256) {
+        return s_soldToken;
     }
 
     function getOwner() public view returns (address) {
