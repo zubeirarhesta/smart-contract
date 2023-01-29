@@ -14,14 +14,14 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     // Fungsi:
     // 1. burn, - selesai
     // 2. transfer, - selesai
-    // 3. staking, dan
+    // 3. staking, dan - selesai
     // 4. transfer ownership - selesai
     // Fitur:
     // 1. Berapa jumlah token yang sudah terjual --> getSoldTokens() - selesai
     // 2. Mengubah harga token --> updateTokebPrice(uint256 newTokenPrice) - selesai
     // 3. Merubah alamat wallet --> updateTreasuryWallet(address newTreasuryWallet) - selesai
     // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner) - selesai
-    // 4. Staking token untuk memberikan token rewards
+    // 4. Staking token untuk memberikan token rewards - selesai
     // 5. Bisa di-redeem untuk pembayaran off-chain
 
     // Mengembalikan nilai berupa jumlah token yang allowed by owner for buyer to use. Granting menggunakan approve
