@@ -24,29 +24,20 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     // 4. Staking token untuk memberikan token rewards - selesai
     // 5. Bisa di-redeem untuk pembayaran off-chain
 
-    // Mengembalikan nilai berupa jumlah token yang allowed by owner for buyer to use. Granting menggunakan approve
-    mapping(address => mapping(address => uint256)) private allowances;
-
-    address[] public s_purchasers;
-    address private immutable i_projectOwner =
-        0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
-    uint256 private immutable i_initialSupply = 5000000;
-    string private constant NAME = "SoonanTsoor";
-    string private constant SYMBOL = "SNSR";
     uint256 private s_soldToken;
     uint256 private s_tokenPrice;
+    uint256 private s_initialSupply = 5 * (10 ** 6) * decimals();
+
+    address[] public s_purchasers;
     address private treasuryWallet;
+    address private immutable i_projectOwner =
+        0x5B38Da6a701c568545dCfcB03FcB875f56beddC4; // contoh wallet pemilik projek untuk likuifasi
+
+    string private constant NAME = "SoonanTsoor";
+    string private constant SYMBOL = "WSNSR";
 
     constructor() ERC20(NAME, SYMBOL) {
-        _mint(msg.sender, i_initialSupply);
-    }
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
+        _mint(msg.sender, s_initialSupply);
     }
 
     function mintSNSR(address to, uint256 amount) public onlyOwner {
@@ -92,7 +83,7 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     }
 
     function setSoldTokens() private returns (uint256) {
-        s_soldToken = i_initialSupply - balanceOf(msg.sender);
+        s_soldToken = s_initialSupply - balanceOf(msg.sender);
         return s_soldToken;
     }
 
@@ -137,5 +128,13 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
 
     function getTokenPrice() public view returns (uint256) {
         return s_tokenPrice;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 }
