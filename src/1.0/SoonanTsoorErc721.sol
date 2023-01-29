@@ -24,6 +24,7 @@ contract SoonanTsoor is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
     // 4. Berapa jumlah token yang sudah terjual
     // 5. Withdraw uang ke waller pemilik proyek
     // 6. Bisa di-redeem untuk pembayaran off-chain
+    // 7. Merubah base URI
 
     uint256 private s_initialSupply = 5100;
     uint256 private s_totalSupply;

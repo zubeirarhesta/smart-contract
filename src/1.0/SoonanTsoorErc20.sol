@@ -18,19 +18,24 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     // 4. transfer ownership - selesai
     // Fitur:
     // 1. Berapa jumlah token yang sudah terjual --> getSoldTokens() - selesai
-    // 2. Mengubah harga token --> setPrice(uint256 price)
-    // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner)
+    // 2. Mengubah harga token --> updateTokebPrice(uint256 newTokenPrice) - selesai
+    // 3. Merubah alamat wallet --> updateTreasuryWallet(address newTreasuryWallet) - selesai
+    // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner) - selesai
     // 4. Staking token untuk memberikan token rewards
     // 5. Bisa di-redeem untuk pembayaran off-chain
 
     // Mengembalikan nilai berupa jumlah token yang allowed by owner for buyer to use. Granting menggunakan approve
     mapping(address => mapping(address => uint256)) private allowances;
 
-    address[] private s_accounts;
+    address[] public s_purchasers;
+    address private immutable i_projectOwner =
+        0x5B38Da6a701c568545dCfcB03FcB875f56beddC4;
     uint256 private immutable i_initialSupply = 5000000;
     string private constant NAME = "SoonanTsoor";
     string private constant SYMBOL = "SNSR";
-    uint256 s_soldToken;
+    uint256 private s_soldToken;
+    uint256 private s_tokenPrice;
+    address private treasuryWallet;
 
     constructor() ERC20(NAME, SYMBOL) {
         _mint(msg.sender, i_initialSupply);
@@ -61,8 +66,21 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         return (true, setSoldTokens());
     }
 
+    function transferUsdc(uint256 amountOfUsdc) private onlyOwner {
+        transfer(treasuryWallet, amountOfUsdc);
+    }
+
     function transferOwnershipSNSR(address newOwner) public onlyOwner {
         transferOwnership(newOwner);
+    }
+
+    function purchase(uint256 amountOfUsdc) public payable {
+        transferUsdc(amountOfUsdc);
+        s_purchasers.push(msg.sender);
+    }
+
+    function withdraw(uint256 amount) public payable onlyOwner {
+        _transfer(treasuryWallet, i_projectOwner, amount);
     }
 
     function _beforeTokenTransfer(
@@ -76,6 +94,20 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     function setSoldTokens() private returns (uint256) {
         s_soldToken = i_initialSupply - balanceOf(msg.sender);
         return s_soldToken;
+    }
+
+    function updateTokenPrice(
+        uint256 newTokenPrice
+    ) public onlyOwner returns (uint256) {
+        s_tokenPrice = newTokenPrice;
+        return s_tokenPrice;
+    }
+
+    function updateTreasuryWallet(
+        address newTreasuryWallet
+    ) public onlyOwner returns (address) {
+        treasuryWallet = newTreasuryWallet;
+        return treasuryWallet;
     }
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
@@ -101,5 +133,9 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
 
     function getSymbol() public view returns (string memory) {
         return symbol();
+    }
+
+    function getTokenPrice() public view returns (uint256) {
+        return s_tokenPrice;
     }
 }
