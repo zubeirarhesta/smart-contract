@@ -29,7 +29,7 @@ contract SoonanTsoor is
     // 2. Melihat daftar NFT yang dimiliki dia sendiri - selesai
     // 3. Melihat / membeli NFT di Opensea/Nftfy
     // 4. Berapa jumlah token yang sudah terjual - selesai
-    // 5. Withdraw uang ke wallet pemilik proyek
+    // 5. Withdraw uang ke wallet pemilik proyek - selesai
     // 6. Bisa di-redeem untuk pembayaran off-chain
     // 7. Merubah base URI - selesai
     using Counters for Counters.Counter;
@@ -87,9 +87,9 @@ contract SoonanTsoor is
         address from,
         address to,
         uint256 tokenId,
-        bytes memory data
+        bytes memory
     ) public {
-        _safeTransfer(from, to, tokenId, data);
+        _safeTransfer(from, to, tokenId, "");
     }
 
     function _beforeTokenTransfer(
@@ -106,6 +106,15 @@ contract SoonanTsoor is
     ) public onlyOwner returns (string memory) {
         base = newBaseUri;
         return base;
+    }
+
+    function withdraw(
+        address,
+        address,
+        uint256 amount,
+        bytes memory
+    ) public payable onlyOwner {
+        safeTransfer(treasuryWallet, i_projectOwner, amount, "");
     }
 
     // The following functions are overrides required by Solidity.
@@ -143,6 +152,6 @@ contract SoonanTsoor is
     }
 
     function getSoldTokens() public view returns (uint256) {
-        return _tokenIdCounter.current();
+        return (_tokenIdCounter.current() - 1);
     }
 }
