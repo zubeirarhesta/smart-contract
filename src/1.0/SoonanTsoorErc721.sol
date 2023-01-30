@@ -15,7 +15,7 @@ contract SoonanTsoor is
     Ownable,
     ERC721Burnable
 {
-    // Bisa di-upgrade(menggunakan proxy) = yes
+    // Bisa di-upgrade(menggunakan proxy) = yes - almost
     // Token Suplai = 5100 - selesai
     // Bisa difraksi = ya
     // Pembayaran = USDC
@@ -36,11 +36,11 @@ contract SoonanTsoor is
 
     Counters.Counter private _tokenIdCounter;
 
-    mapping(address => uint256[]) private listOfTokensOwnedBy;
+    mapping(address => uint256[]) private _listOfTokensOwnedBy;
 
-    uint256 private s_initialSupply = 5100;
+    uint256 private _initialSupply = 5100;
 
-    address private treasuryWallet;
+    address private _treasuryWallet;
     address private immutable i_projectOwner =
         0x5B38Da6a701c568545dCfcB03FcB875f56beddC4; // contoh wallet pemilik projek untuk likuifasi
 
@@ -50,10 +50,6 @@ contract SoonanTsoor is
 
     constructor() ERC721(NAME, SYMBOL) {
         _baseURI();
-    }
-
-    function _baseURI() internal view override returns (string memory) {
-        return base;
     }
 
     function setBaseURI(
@@ -80,7 +76,7 @@ contract SoonanTsoor is
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
-        listOfTokensOwnedBy[to].push(tokenId);
+        _listOfTokensOwnedBy[to].push(tokenId);
     }
 
     function safeTransfer(
@@ -90,15 +86,6 @@ contract SoonanTsoor is
         bytes memory
     ) public {
         _safeTransfer(from, to, tokenId, "");
-    }
-
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        uint256 batchSize
-    ) internal override whenNotPaused {
-        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     function updateBaseUri(
@@ -114,7 +101,26 @@ contract SoonanTsoor is
         uint256 amount,
         bytes memory
     ) public payable onlyOwner {
-        safeTransfer(treasuryWallet, i_projectOwner, amount, "");
+        safeTransfer(_treasuryWallet, i_projectOwner, amount, "");
+    }
+
+    function tokenURI(
+        uint256 tokenId
+    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return base;
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override whenNotPaused {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
     // The following functions are overrides required by Solidity.
@@ -125,12 +131,6 @@ contract SoonanTsoor is
         super._burn(tokenId);
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
-    }
-
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
     function getBalanceOf(address account) public view returns (uint256) {
         return balanceOf(account);
@@ -139,12 +139,12 @@ contract SoonanTsoor is
     function getMyNft() public view returns (string[] memory) {
         address owner = msg.sender;
         string[] memory tokenUris = new string[](
-            listOfTokensOwnedBy[owner].length
+            _listOfTokensOwnedBy[owner].length
         );
         string memory toUr;
         uint256 tokenId;
-        for (uint i = 0; i < listOfTokensOwnedBy[owner].length; i++) {
-            tokenId = listOfTokensOwnedBy[owner][i];
+        for (uint i = 0; i < _listOfTokensOwnedBy[owner].length; i++) {
+            tokenId = _listOfTokensOwnedBy[owner][i];
             toUr = tokenURI(tokenId);
             tokenUris[i] = toUr;
         }
