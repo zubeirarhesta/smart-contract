@@ -4,5 +4,13 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 gas_reports = ["*"]
+ffi = true
+build_info = true
+extra_output = ['storageLayout']
+force = true
+fs_permissions = [{ access = "read", path = "./" }]
+
+[rpc_endpoints]
+localhost = "http://127.0.0.1:8545"
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
