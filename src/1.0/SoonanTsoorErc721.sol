@@ -1,30 +1,42 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity 0.8.17;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract SoonanTsoor is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
+contract SoonanTsoor is
+    ERC721,
+    ERC721URIStorage,
+    Pausable,
+    Ownable,
+    ERC721Burnable
+{
     // Bisa di-upgrade(menggunakan proxy) = yes
     // Token Suplai = 5100 - selesai
     // Bisa difraksi = ya
     // Pembayaran = USDC
     // Fungsi:
-    // 1. burn,
-    // 2. transfer,
+    // 1. burn, - selesai
+    // 2. transfer, - selesai
     // 3. staking, dan
-    // 4. transfer ownership
+    // 4. transfer ownership - selesai
     // Fitur:
     // 1. Melihat jumlah NFT yang dimiliki wallet tertentu - selesai
     // 2. Melihat daftar NFT yang dimiliki dia sendiri - selesai
     // 3. Melihat / membeli NFT di Opensea/Nftfy
-    // 4. Berapa jumlah token yang sudah terjual
+    // 4. Berapa jumlah token yang sudah terjual - selesai
     // 5. Withdraw uang ke wallet pemilik proyek
     // 6. Bisa di-redeem untuk pembayaran off-chain
-    // 7. Merubah base URI
+    // 7. Merubah base URI - selesai
+    using Counters for Counters.Counter;
+
+    Counters.Counter private _tokenIdCounter;
+
+    mapping(address => uint256[]) private listOfTokensOwnedBy;
 
     uint256 private s_initialSupply = 5100;
 
@@ -34,9 +46,66 @@ contract SoonanTsoor is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
 
     string private constant NAME = "SoonanTsoor";
     string private constant SYMBOL = "SNSR";
+    string public base = "https://nft.soonantsoor.com";
 
     constructor() ERC721(NAME, SYMBOL) {
-        _mint(msg.sender, s_initialSupply);
+        _baseURI();
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return base;
+    }
+
+    function setBaseURI(
+        string memory newBaseURI
+    ) public onlyOwner returns (string memory) {
+        base = newBaseURI;
+        return base;
+    }
+
+    function transferOwnershipSNSR(address newOwner) public onlyOwner {
+        transferOwnership(newOwner);
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function safeMint(address to, string memory uri) public onlyOwner {
+        uint256 tokenId = _tokenIdCounter.current();
+        _tokenIdCounter.increment();
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+        listOfTokensOwnedBy[to].push(tokenId);
+    }
+
+    function safeTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory data
+    ) public {
+        _safeTransfer(from, to, tokenId, data);
+    }
+
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override whenNotPaused {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    function updateBaseUri(
+        string memory newBaseUri
+    ) public onlyOwner returns (string memory) {
+        base = newBaseUri;
+        return base;
     }
 
     // The following functions are overrides required by Solidity.
@@ -58,7 +127,22 @@ contract SoonanTsoor is ERC721, ERC721URIStorage, ERC721Burnable, Ownable {
         return balanceOf(account);
     }
 
-    function getMyBalance() public view returns (uint256) {
-        return balanceOf(msg.sender);
+    function getMyNft() public view returns (string[] memory) {
+        address owner = msg.sender;
+        string[] memory tokenUris = new string[](
+            listOfTokensOwnedBy[owner].length
+        );
+        string memory toUr;
+        uint256 tokenId;
+        for (uint i = 0; i < listOfTokensOwnedBy[owner].length; i++) {
+            tokenId = listOfTokensOwnedBy[owner][i];
+            toUr = tokenURI(tokenId);
+            tokenUris[i] = toUr;
+        }
+        return tokenUris;
+    }
+
+    function getSoldTokens() public view returns (uint256) {
+        return _tokenIdCounter.current();
     }
 }
