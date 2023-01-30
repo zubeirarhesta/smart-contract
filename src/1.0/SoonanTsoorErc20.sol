@@ -24,12 +24,12 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     // 4. Staking token untuk memberikan token rewards - selesai
     // 5. Bisa di-redeem untuk pembayaran off-chain
 
-    uint256 private s_soldToken;
-    uint256 private s_tokenPrice;
-    uint256 private s_initialSupply = 5 * (10 ** 6) * decimals();
+    uint256 private _soldToken;
+    uint256 private _tokenPrice;
+    uint256 private _initialSupply = 5 * (10 ** 6) * decimals();
 
-    address[] public s_purchasers;
-    address private treasuryWallet;
+    address[] public purchasers;
+    address private _treasuryWallet;
     address private immutable i_projectOwner =
         0x5B38Da6a701c568545dCfcB03FcB875f56beddC4; // contoh wallet pemilik projek untuk likuifasi
 
@@ -37,7 +37,15 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     string private constant SYMBOL = "WSNSR";
 
     constructor() ERC20(NAME, SYMBOL) {
-        _mint(msg.sender, s_initialSupply);
+        _mint(msg.sender, _initialSupply);
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
     }
 
     function mintSNSR(address to, uint256 amount) public onlyOwner {
@@ -54,11 +62,7 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         uint256 amount
     ) public onlyOwner returns (bool, uint256) {
         _transfer(from, to, amount);
-        return (true, setSoldTokens());
-    }
-
-    function transferUsdc(uint256 amountOfUsdc) private onlyOwner {
-        transfer(treasuryWallet, amountOfUsdc);
+        return (true, _setSoldTokens());
     }
 
     function transferOwnershipSNSR(address newOwner) public onlyOwner {
@@ -66,12 +70,26 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     }
 
     function purchase(uint256 amountOfUsdc) public payable {
-        transferUsdc(amountOfUsdc);
-        s_purchasers.push(msg.sender);
+        _transferUsdc(amountOfUsdc);
+        purchasers.push(msg.sender);
     }
 
     function withdraw(uint256 amount) public payable onlyOwner {
-        _transfer(treasuryWallet, i_projectOwner, amount);
+        _transfer(_treasuryWallet, i_projectOwner, amount);
+    }
+
+    function updateTokenPrice(
+        uint256 newTokenPrice
+    ) public onlyOwner returns (uint256) {
+        _tokenPrice = newTokenPrice;
+        return _tokenPrice;
+    }
+
+    function updateTreasuryWallet(
+        address newTreasuryWallet
+    ) public onlyOwner returns (address) {
+        _treasuryWallet = newTreasuryWallet;
+        return _treasuryWallet;
     }
 
     function _beforeTokenTransfer(
@@ -82,23 +100,13 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function setSoldTokens() private returns (uint256) {
-        s_soldToken = s_initialSupply - balanceOf(msg.sender);
-        return s_soldToken;
+    function _transferUsdc(uint256 amountOfUsdc) private onlyOwner {
+        transfer(_treasuryWallet, amountOfUsdc);
     }
 
-    function updateTokenPrice(
-        uint256 newTokenPrice
-    ) public onlyOwner returns (uint256) {
-        s_tokenPrice = newTokenPrice;
-        return s_tokenPrice;
-    }
-
-    function updateTreasuryWallet(
-        address newTreasuryWallet
-    ) public onlyOwner returns (address) {
-        treasuryWallet = newTreasuryWallet;
-        return treasuryWallet;
+    function _setSoldTokens() private returns (uint256) {
+        _soldToken = _initialSupply - balanceOf(msg.sender);
+        return _soldToken;
     }
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
@@ -107,7 +115,7 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     }
 
     function getSoldTokens() public view returns (uint256) {
-        return s_soldToken;
+        return _soldToken;
     }
 
     function getOwner() public view returns (address) {
@@ -127,14 +135,6 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
     }
 
     function getTokenPrice() public view returns (uint256) {
-        return s_tokenPrice;
-    }
-
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
+        return _tokenPrice;
     }
 }
