@@ -77,17 +77,12 @@ contract SoonanTsoor is
         _unpause();
     }
 
-    function safeMint(address to, string memory uri) public onlyOwner {
+    function safeMint(string memory uri) public onlyOwner {
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
-        _safeMint(to, tokenId);
+        _safeMint(msg.sender, tokenId);
         _setTokenURI(tokenId, uri);
-        _listOfTokensOwnedBy[to].push(tokenId);
-    }
-
-    function safeMintNextId() public {
-        _safeMint(msg.sender, supply);
-        supply++;
+        _listOfTokensOwnedBy[msg.sender].push(tokenId);
     }
 
     function safeTransfer(
@@ -166,10 +161,5 @@ contract SoonanTsoor is
     // returns the amount of tokens sold
     function getSoldTokens() public view returns (uint256) {
         return (_tokenIdCounter.current() - 1);
-    }
-
-    // does the same thing like getSoldTokens() function
-    function getSupply() public view returns (uint) {
-        return supply;
     }
 }
