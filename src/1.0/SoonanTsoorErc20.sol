@@ -48,15 +48,15 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         _unpause();
     }
 
-    function mintSNSR(address to, uint256 amount) public onlyOwner {
+    function thisMint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
     }
 
-    function burnSNSR(address from, uint256 amount) public onlyOwner {
+    function thisBurn(address from, uint256 amount) public onlyOwner {
         _burn(from, amount);
     }
 
-    function transferSNSR(
+    function thisTransfer(
         address from,
         address to,
         uint256 amount
@@ -65,7 +65,7 @@ contract SoonanTsoor is ERC20, ERC20Burnable, Pausable, Ownable {
         return (true, _setSoldTokens());
     }
 
-    function transferOwnershipSNSR(address newOwner) public onlyOwner {
+    function thisTransferOwnership(address newOwner) public onlyOwner {
         transferOwnership(newOwner);
     }
 
