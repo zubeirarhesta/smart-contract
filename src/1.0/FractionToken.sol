@@ -48,11 +48,11 @@ contract FractionToken is ERC20, ERC20Burnable, Pausable, Ownable {
         address _NFTOwner,
         uint256 _royaltyPercentage,
         uint256 _supply,
-        address _projectOwner,
+        /* address _projectOwner, */
         string memory _tokenName,
         string memory _tokenTicker
     ) ERC20(_tokenName, _tokenTicker) {
-        projectOwner = _projectOwner;
+        /* projectOwner = _projectOwner; */
         supply = _supply;
         NFTAddress = _NFTAddress;
         NFTId = _NFTId;
