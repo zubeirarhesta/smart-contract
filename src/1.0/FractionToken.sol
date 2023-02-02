@@ -9,7 +9,13 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract FractionToken is ERC20, ERC20Burnable, Pausable, Ownable {
+contract FractionToken is
+    ERC20,
+    ERC20Burnable,
+    Pausable,
+    Ownable,
+    ReentrancyGuard
+{
     // Bisa di-upgrade(menggunakan proxy) = yes
     // Token Suplai = 5000000 - selesai
     // Pembayaran = USDC
@@ -41,6 +47,7 @@ contract FractionToken is ERC20, ERC20Burnable, Pausable, Ownable {
     address public projectOwner;
 
     mapping(address => bool) isHolding;
+    mapping(uint256 => uint256) public supplyOf;
 
     constructor(
         address _NFTAddress,
@@ -48,25 +55,15 @@ contract FractionToken is ERC20, ERC20Burnable, Pausable, Ownable {
         address _NFTOwner,
         uint256 _royaltyPercentage,
         uint256 _supply,
-        /* address _projectOwner, */
         string memory _tokenName,
         string memory _tokenTicker
     ) ERC20(_tokenName, _tokenTicker) {
-        /* projectOwner = _projectOwner; */
-        supply = _supply;
         NFTAddress = _NFTAddress;
         NFTId = _NFTId;
         NFTOwner = _NFTOwner;
         RoyaltyPercentage = _royaltyPercentage;
-
-        ContractDeployer = msg.sender;
-
+        supply = _supply;
         _mint(_NFTOwner, supply);
-    }
-
-    modifier onlyContractDeployer() {
-        _checkContractDeployer();
-        _;
     }
 
     function pause() public onlyOwner {
@@ -77,129 +74,125 @@ contract FractionToken is ERC20, ERC20Burnable, Pausable, Ownable {
         _unpause();
     }
 
-    function thisMint(address to, uint256 amount) public onlyOwner {
-        _mint(to, amount);
+    function mintTo(address _to, uint256 _amount) public onlyOwner {
+        _mint(_to, _amount);
     }
 
-    function transfer(
-        address to,
-        uint256 amount
-    ) public override returns (bool) {
+    function transferTo(
+        address _to,
+        uint256 _amount,
+        uint256 _tokenId
+    ) public returns (bool) {
         //calculate royalty fee
-        uint royaltyFee = (amount * RoyaltyPercentage) / 100;
-        uint afterRoyaltyFee = amount - royaltyFee;
+        uint royaltyFee = (_amount * RoyaltyPercentage) / 100;
+        uint afterRoyaltyFee = _amount - royaltyFee;
         address owner = _msgSender();
 
         //send royalty fee to owner
         _transfer(owner, NFTOwner, royaltyFee);
         //send rest to receiver
-        _transfer(owner, to, afterRoyaltyFee);
+        _transfer(owner, _to, afterRoyaltyFee);
 
         // addNewUserRemoveOld(to, owner);
-        _setSoldTokens();
-
+        tokenOwners.push(_to);
+        setSoldTokens(_tokenId, _amount);
         return true;
     }
 
     function transferFrom(
-        address from,
-        address to,
-        uint256 amount
+        address _from,
+        address _to,
+        uint256 _amount
     ) public virtual override returns (bool) {
         address spender = _msgSender();
-        _spendAllowance(from, spender, amount);
+        _spendAllowance(_from, spender, _amount);
 
         //calculate royalty fee
-        uint royaltyFee = (amount * RoyaltyPercentage) / 100;
-        uint afterRoyaltyFee = amount - royaltyFee;
+        uint royaltyFee = (_amount * RoyaltyPercentage) / 100;
+        uint afterRoyaltyFee = _amount - royaltyFee;
 
         //send royalty fee to owner
-        _transfer(from, NFTOwner, royaltyFee);
+        _transfer(_from, NFTOwner, royaltyFee);
         //send rest to receiver
-        _transfer(from, to, afterRoyaltyFee);
+        _transfer(_from, _to, afterRoyaltyFee);
 
         return true;
     }
 
-    function thisTransferOwnership(
-        address newOwner
-    ) public onlyContractDeployer {
-        transferOwnership(newOwner);
+    function transferOwnershipTo(address _newOwner) public {
+        transferOwnership(_newOwner);
     }
 
-    function purchase(uint256 amountOfUsdc) public payable {
-        _transferUsdc(amountOfUsdc);
+    function purchase(
+        uint256 _amountOfUsdc,
+        uint256 _tokenId
+    ) public payable whenNotPaused nonReentrant {
+        require(
+            supplyOf[_tokenId] <= supply, // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
+            "Exceed the amount of available supplies"
+        );
+        _transferUsdc(_amountOfUsdc);
         tokenOwners.push(msg.sender);
     }
 
-    function burn(uint256 amount) public virtual override {
-        _burn(_msgSender(), amount);
+    function burn(uint256 _amount) public virtual override {
+        _burn(_msgSender(), _amount);
     }
 
-    function updateNFTOwner(address _newOwner) public onlyContractDeployer {
-        NFTOwner = _newOwner;
+    function setNewNFTOwner(address _newNFTOwner) external {
+        NFTOwner = _newNFTOwner;
     }
 
-    function withdraw(uint256 amount) public payable onlyContractDeployer {
-        _transfer(_treasuryWallet, projectOwner, amount);
+    function withdraw(uint256 _amount) public payable {
+        _transfer(_treasuryWallet, projectOwner, _amount);
     }
 
-    function updateTokenPrice(
-        uint256 newTokenPrice
-    ) public onlyContractDeployer returns (uint256) {
-        _tokenPrice = newTokenPrice;
-        return _tokenPrice;
+    function setNewTokenPrice(uint256 _newTokenPrice) external {
+        _tokenPrice = _newTokenPrice;
     }
 
-    function updateTreasuryWallet(
-        address newTreasuryWallet
-    ) public onlyContractDeployer returns (address) {
-        _treasuryWallet = newTreasuryWallet;
-        return _treasuryWallet;
+    function setNewProjectOwnerWallet(address _newProjectOwnerWallet) external {
+        projectOwner = _newProjectOwnerWallet;
     }
 
-    function returnTokenOwners() public view returns (address[] memory) {
-        return tokenOwners;
+    function setNewTreasuryWallet(address _newTreasuryWallet) external {
+        _treasuryWallet = _newTreasuryWallet;
     }
 
     function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
+        address _from,
+        address _to,
+        uint256 _amount
     ) internal override whenNotPaused {
-        super._beforeTokenTransfer(from, to, amount);
+        super._beforeTokenTransfer(_from, _to, _amount);
     }
 
-    function _checkContractDeployer() internal view virtual {
-        require(
-            msg.sender == ContractDeployer,
-            "Only contract deployer can call this function"
-        );
+    function _transferUsdc(uint256 _amountOfUsdc) private {
+        transfer(_treasuryWallet, _amountOfUsdc);
     }
 
-    function _transferUsdc(uint256 amountOfUsdc) private onlyOwner {
-        transfer(_treasuryWallet, amountOfUsdc);
-    }
-
-    function _setSoldTokens() private returns (uint256) {
-        _soldToken = supply - balanceOf(ContractDeployer);
-        return _soldToken;
+    function setSoldTokens(uint256 _tokenId, uint256 _amount) private {
+        supplyOf[_tokenId] + _amount; // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
     }
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
     function getTotalSupply() public view returns (uint256) {
-        return totalSupply();
+        return supply;
     }
 
-    function getSoldTokens() public view returns (uint256) {
-        return _soldToken;
+    function getSoldTokens(uint256 _tokenId) public view returns (uint256) {
+        return supplyOf[_tokenId]; // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
     }
 
-    function getBalanceOf(address account) public view returns (uint256) {
-        return balanceOf(account);
+    function getBalanceOf(address _account) public view returns (uint256) {
+        return balanceOf(_account);
     }
 
     function getTokenPrice() public view returns (uint256) {
         return _tokenPrice;
+    }
+
+    function getTokenOwners() public view onlyOwner returns (address[] memory) {
+        return tokenOwners;
     }
 }

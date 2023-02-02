@@ -117,11 +117,11 @@ contract FractionalizeNFT is IERC721Receiver {
         uint256 _NftId
     ) public {
         uint256 index = NftIndex[_NftContract][_NftId];
-        require(
+        /* require(
             AccessDeposits[msg.sender].Deposit[index].hasFractionalized ==
                 false,
             "Only if the NFT hasn't been fractionalise can you withdraw the NFT with this function"
-        );
+        ); */
         require(
             AccessDeposits[msg.sender].Deposit[index].owner == msg.sender,
             "Only the NFT owner can call this function"
@@ -136,7 +136,7 @@ contract FractionalizeNFT is IERC721Receiver {
     //required function for ERC721
     function onERC721Received(
         address,
-        address /* from, */,
+        address from,
         uint256,
         bytes calldata
     ) external pure override returns (bytes4) {

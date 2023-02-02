@@ -8,7 +8,7 @@
 	branch = v4.2.3
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
+	url = https://github.com/Openzeppelin/openzeppelin-contracts
 	branch = v4.8.1
 [submodule "lib/chugsplash-foundry"]
 	path = lib/chugsplash-foundry
