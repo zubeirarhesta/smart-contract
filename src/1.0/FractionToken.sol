@@ -172,7 +172,7 @@ contract FractionToken is
     }
 
     function setSoldTokens(uint256 _tokenId, uint256 _amount) private {
-        supplyOf[_tokenId] + _amount; // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
+        supplyOf[_tokenId] += _amount; // or should be without taking from param like this? -> supplyOf[NFTId] += _amount,
     }
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
@@ -181,7 +181,7 @@ contract FractionToken is
     }
 
     function getSoldTokens(uint256 _tokenId) public view returns (uint256) {
-        return supplyOf[_tokenId]; // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
+        return supplyOf[_tokenId]; // or should be without taking from param like this? -> supplyOf[NFTId],
     }
 
     function getBalanceOf(address _account) public view returns (uint256) {
