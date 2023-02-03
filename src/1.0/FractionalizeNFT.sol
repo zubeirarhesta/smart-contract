@@ -19,7 +19,7 @@ contract FractionalizeNFT is IERC721Receiver {
     struct DepositInfo {
         address owner;
         address nftContractAddress;
-        uint256 nftId;
+        //uint256 nftId;
         uint256 depositTimestamp; //deposited time
         //post fractionalize info
         address fractionContractAddress;
@@ -37,7 +37,7 @@ contract FractionalizeNFT is IERC721Receiver {
 
         newDeposit.owner = msg.sender;
         newDeposit.nftContractAddress = _nftContractAddress;
-        newDeposit.nftId = _nftId;
+        //newDeposit.nftId = _nftId;
         newDeposit.depositTimestamp = block.timestamp;
 
         newDeposit.hasFractionalized = false;
@@ -54,6 +54,7 @@ contract FractionalizeNFT is IERC721Receiver {
     function createFraction(
         address _nftContractAddress,
         uint256 _nftId,
+        address,
         uint256 _royaltyPercentage,
         uint256 _supply,
         string memory _tokenName,
@@ -83,7 +84,7 @@ contract FractionalizeNFT is IERC721Receiver {
     }
 
     //can withdraw the NFT if you own the total supply
-    function withdrawNftWithSupply(address _fractionContract) public {
+    function withdrawNftWithSupply(address payable _fractionContract) public {
         //address must approve this contract to transfer fraction tokens
 
         FractionToken fraction = FractionToken(_fractionContract);

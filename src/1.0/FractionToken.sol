@@ -35,18 +35,19 @@ contract FractionToken is
     uint256 public NFTId;
     address public NFTOwner;
 
-    address public ContractDeployer;
     uint256 public RoyaltyPercentage;
 
     uint256 public supply;
     uint256 private _soldToken;
-    uint256 private _tokenPrice;
+    uint256 tokenPrice;
     address[] tokenOwners;
 
     address private _treasuryWallet;
     address public projectOwner;
+    address contractDeployer;
 
     mapping(address => bool) isHolding;
+    mapping(uint256 => address) public ownerOf;
     mapping(uint256 => uint256) public supplyOf;
 
     constructor(
@@ -63,14 +64,16 @@ contract FractionToken is
         NFTOwner = _NFTOwner;
         RoyaltyPercentage = _royaltyPercentage;
         supply = _supply;
+
+        contractDeployer = msg.sender;
         _mint(_NFTOwner, supply);
     }
 
-    function pause() public onlyOwner {
+    function pause() public {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() public {
         _unpause();
     }
 
@@ -81,7 +84,7 @@ contract FractionToken is
     function transferTo(
         address _to,
         uint256 _amount,
-        uint256 _tokenId
+        uint256 _nftId
     ) public returns (bool) {
         //calculate royalty fee
         uint royaltyFee = (_amount * RoyaltyPercentage) / 100;
@@ -95,7 +98,14 @@ contract FractionToken is
 
         // addNewUserRemoveOld(to, owner);
         tokenOwners.push(_to);
-        setSoldTokens(_tokenId, _amount);
+        setOwnerOf(_nftId, _to);
+        setSoldTokens(_amount, _nftId);
+        return true;
+    }
+
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
+        address owner = _msgSender();
+        _approve(owner, spender, amount);
         return true;
     }
 
@@ -124,14 +134,15 @@ contract FractionToken is
     }
 
     function purchase(
-        uint256 _amountOfUsdc,
-        uint256 _tokenId
+        uint256 _nftId,
+        uint256 _tokens
     ) public payable whenNotPaused nonReentrant {
         require(
-            supplyOf[_tokenId] <= supply, // or should be without taking from param like this? -> supplyOf[NFTId] <= supply,
+            supplyOf[_nftId] <= supply, //somehow this require only reverts with error once supplyOf[_nftId] > supply the second time
             "Exceed the amount of available supplies"
         );
-        _transferUsdc(_amountOfUsdc);
+        setOwnerOf(_nftId, msg.sender);
+        setSoldTokens(_tokens, _nftId);
         tokenOwners.push(msg.sender);
     }
 
@@ -139,25 +150,38 @@ contract FractionToken is
         _burn(_msgSender(), _amount);
     }
 
-    function setNewNFTOwner(address _newNFTOwner) external {
-        NFTOwner = _newNFTOwner;
+    function transferEth(address payable _to) public payable /*  */ {
+        (bool sent /* bytes memory data */, ) = _to.call{
+            value: msg.value
+        }("");
+        require(sent, "Failed to send Ether");
     }
 
-    function withdraw(uint256 _amount) public payable {
+    /* function withdraw(uint256 _amount) public payable {
         _transfer(_treasuryWallet, projectOwner, _amount);
-    }
+    } */
+
+    /* function setNewNFTOwner(address _newNFTOwner) external {
+        NFTOwner = _newNFTOwner;
+    } */ 
 
     function setNewTokenPrice(uint256 _newTokenPrice) external {
-        _tokenPrice = _newTokenPrice;
+        tokenPrice = _newTokenPrice;
     }
 
-    function setNewProjectOwnerWallet(address _newProjectOwnerWallet) external {
-        projectOwner = _newProjectOwnerWallet;
+    function setNewProjectOwner(address _newProjectOwner) external {
+        projectOwner = _newProjectOwner;
     }
 
     function setNewTreasuryWallet(address _newTreasuryWallet) external {
         _treasuryWallet = _newTreasuryWallet;
     }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
 
     function _beforeTokenTransfer(
         address _from,
@@ -167,21 +191,46 @@ contract FractionToken is
         super._beforeTokenTransfer(_from, _to, _amount);
     }
 
-    function _transferUsdc(uint256 _amountOfUsdc) private {
+    /* function _transferUsdc(uint256 _amountOfUsdc) private {
         transfer(_treasuryWallet, _amountOfUsdc);
+    } */
+
+    function setSoldTokens(uint256 _amount, uint256 _nftId) private {
+        uint256 currentSoldTokens = supplyOf[_nftId];
+        supplyOf[_nftId] = currentSoldTokens + _amount; 
     }
 
-    function setSoldTokens(uint256 _tokenId, uint256 _amount) private {
-        supplyOf[_tokenId] += _amount; // or should be without taking from param like this? -> supplyOf[NFTId] += _amount,
+    function setOwnerOf(uint256 _nftId, address _ownerOf) private {
+        ownerOf[_nftId] = _ownerOf;
     }
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
+    function ContractDeployer() public view returns(address){
+        return contractDeployer;
+    }
+
+    function getProjectOwner() public view returns(address){
+        return projectOwner;
+    }
+
+    function getTreasuryWallet() public view returns(address){
+        return _treasuryWallet;
+    }
+
+    function getBalanceEth(address /* payable */ account) public view returns (uint) {
+        return account.balance;
+    }
+
     function getTotalSupply() public view returns (uint256) {
         return supply;
     }
 
-    function getSoldTokens(uint256 _tokenId) public view returns (uint256) {
-        return supplyOf[_tokenId]; // or should be without taking from param like this? -> supplyOf[NFTId],
+    function getOwnerOf(uint256 _nftId) public view returns(address){
+        return ownerOf[_nftId];
+    }
+
+    function getSoldTokens(uint256 _nftId) public view returns (uint256) {
+        return supplyOf[_nftId]; // or should be without taking from param like this? -> supplyOf[NFTId],
     }
 
     function getBalanceOf(address _account) public view returns (uint256) {
@@ -189,10 +238,14 @@ contract FractionToken is
     }
 
     function getTokenPrice() public view returns (uint256) {
-        return _tokenPrice;
+        return tokenPrice;
     }
 
     function getTokenOwners() public view onlyOwner returns (address[] memory) {
         return tokenOwners;
+    }
+
+    function getOwner() public view returns(address){
+        return owner();
     }
 }

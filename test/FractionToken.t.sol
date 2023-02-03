@@ -79,7 +79,7 @@ contract FractionTokenTest is Test {
             // catch failing revert() and require()
             emit Log(reason);
         }
-        assertEq(fractionToken.getSoldTokens(5), 0); //those result that nft tokens of Id '5' never sold aka equals'0'
+        assertEq(fractionToken.getSoldTokens(5), 0); //those result that nft tokens of Id '5' is never sold aka equals'0'
     }
 
     function test_mintTo() public {
