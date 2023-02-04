@@ -12,3 +12,4 @@ foundry-cache
 
 # Dotenv file
 .env
+lib/
