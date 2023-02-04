@@ -18,11 +18,11 @@ contract FractionTokenTest is Test {
             5000,
             msg.sender,
             10,
-            1000000,
+            1000,
             "SoonanTsoor",
             "SNSR"
         );
-
+        fractionToken.mintTo(address(this), 1000);
         tokenPrice = 17 ether;
         projectOwner = 0x976EA74026E726554dB657fA54763abd0C3a0aa9; // anvil preset address
         treasuryWallet = 0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65; // anvil preset address
@@ -32,7 +32,7 @@ contract FractionTokenTest is Test {
         //this test covers getTotalSupply()
         //returns the amount of token that minted
         //during the making of fractionToken object instance
-        assertEq(fractionToken.getTotalSupply(), 1000000);
+        assertEq(fractionToken.getTotalSupply(), 1000);
     }
 
     function test_getSoldTokens() public {
@@ -44,15 +44,14 @@ contract FractionTokenTest is Test {
 
     function test_getBalanceOf() public {
         //this test also covers transferTo(address _to, uint256 _amount, uint256 _nftId)
-        fractionToken.mintTo(address(this), 1000);
         address five = 0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc; // anvil preset address
-        fractionToken.transferTo(five, 200, 2); //transfer to 'five', '200' nfts with id of '2'
+        fractionToken.transferTo(five, 2, 200); //transfer to 'five', '200' nfts with id of '2'
         assertEq(fractionToken.getBalanceOf(five), 180); //200 - 200(10%) = 180 <-- this calculation is set in transferTo()
     }
 
     function test_getBalanceses() public {
         //this test shows that getBalanceOf and getBalanceEth are different
-        fractionToken.mintTo(address(this), 1000);
+
         address seven = 0x14dC79964da2C08b23698B3D3cc7Ca32193d9955; // anvil preset address
         fractionToken.transferTo(seven, 300, 2);
         assertFalse(
@@ -63,7 +62,7 @@ contract FractionTokenTest is Test {
 
     function test_getTokenOwners() public {
         //this test covers getTokenOwners() that returns array of addresses
-        fractionToken.purchase(4, 50); // everytime purchase() called, array of tokenOwners increase 1 in length
+        fractionToken.purchase(4, 1); // everytime purchase() called, array of tokenOwners increase 1 in length
         assertFalse(fractionToken.getTokenOwners().length == 0); //thus, the calling of getTokenOwner() should returns 1
     }
 
@@ -79,7 +78,7 @@ contract FractionTokenTest is Test {
             // catch failing revert() and require()
             emit Log(reason);
         }
-        assertEq(fractionToken.getSoldTokens(5), 0); //those result that nft tokens of Id '5' is never sold aka equals'0'
+        assertEq(fractionToken.getTokenOwners().length, 0); //those result that nft tokens of Id '5' is never sold aka equals'0'
     }
 
     function test_mintTo() public {
@@ -100,7 +99,6 @@ contract FractionTokenTest is Test {
     function test_burn() public {
         //this test covers burn()
         //that burns tokens from whoever call this function
-        fractionToken.mintTo(address(this), 1000);
         fractionToken.burn(1000);
         assertEq(fractionToken.getBalanceOf(address(this)), 0);
     }
@@ -145,7 +143,7 @@ contract FractionTokenTest is Test {
         //this test covers getOwnerOf() and returns owner of spesific nftId
         //also covers setOwnerOf() that triggered when purchase() called
         //initially nft with Id of 17 is no man nft
-        fractionToken.purchase(17, 1000); //msg.sender purchases 500 nfts with Id no 17
+        fractionToken.purchase(17, 500); //msg.sender purchases 500 nfts with Id no 17
         assertEq(fractionToken.getOwnerOf(17), address(this));
     }
 
@@ -157,5 +155,16 @@ contract FractionTokenTest is Test {
         fractionToken.approve(address(this), 1000);
         fractionToken.transferFrom(address(this), buyer, 100);
         assertEq(fractionToken.getBalanceOf(buyer), 90);
+    }
+
+    function test_requireOfPurchase() public {
+        fractionToken.purchase(10, 500);
+        try fractionToken.purchase(10, 600) {} catch Error(
+            string memory reason
+        ) {
+            // catch failing revert() and require()
+            emit Log(reason);
+        }
+        assertFalse(fractionToken.getSoldTokens(10) == 1100);
     }
 }

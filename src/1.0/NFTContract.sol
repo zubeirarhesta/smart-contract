@@ -37,13 +37,12 @@ contract SoonanTsoor is
     Counters.Counter private _tokenIdCounter;
 
     mapping(address => uint256[]) private _listOfTokensOwnedBy;
-
-    uint public supply;
+    mapping(uint256 => address) ownerOfThis;
 
     address private _treasuryWallet;
-    address private immutable i_projectOwner =
-        0x5B38Da6a701c568545dCfcB03FcB875f56beddC4; // contoh wallet pemilik projek untuk likuifasi
+    address projectOwner;
 
+    string[] public tokenUris;
     string private constant NAME = "SoonanTsoor";
     string private constant SYMBOL = "SNSR";
     string public base = "https://nft.soonantsoor.com";
@@ -59,39 +58,45 @@ contract SoonanTsoor is
     );
 
     function setBaseURI(
-        string memory newBaseUri
+        string memory _newBaseUri
     ) public onlyOwner returns (string memory) {
-        base = newBaseUri;
+        base = _newBaseUri;
         return base;
     }
 
-    function thisTransferOwnership(address newOwner) public onlyOwner {
-        transferOwnership(newOwner);
+    function transferOwnershipTo(address _newOwner) public {
+        transferOwnership(_newOwner);
     }
 
-    function pause() public onlyOwner {
+    function pause() public {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() public {
         _unpause();
     }
 
-    function safeMint(string memory uri) public onlyOwner {
-        uint256 tokenId = _tokenIdCounter.current();
-        _tokenIdCounter.increment();
-        _safeMint(msg.sender, tokenId);
-        _setTokenURI(tokenId, uri);
-        _listOfTokensOwnedBy[msg.sender].push(tokenId);
+    function safeMint() public {
+        require(
+            owner() == address(this),
+            "This function is only callable by Soonan Tsoor"
+        );
+        string memory tokenUri;
+        for (uint i = 1; i <= 5000; i++) {
+            _safeMint(msg.sender, i);
+            tokenUri = tokenURI(i);
+            tokenUris[i] = tokenUri;
+        }
     }
 
-    function safeTransfer(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes memory
-    ) public {
-        _safeTransfer(from, to, tokenId, "");
+    function safeTransfer(address _to, uint256 _tokenId) public {
+        _safeTransfer(msg.sender, _to, _tokenId, "");
+        ownerOfThis[_tokenId] = _to;
+    }
+
+    function purchase(uint256 _nftId) public payable onlyOwner {
+        //tfEth.transferEth{value: msg.value}(payable(_treasuryWallet));
+        ownerOfThis[_nftId] = msg.sender;
     }
 
     function updateBaseUri(
@@ -99,15 +104,6 @@ contract SoonanTsoor is
     ) public onlyOwner returns (string memory) {
         base = newBaseUri;
         return base;
-    }
-
-    function withdraw(
-        address,
-        address,
-        uint256 amount,
-        bytes memory
-    ) public payable onlyOwner {
-        safeTransfer(_treasuryWallet, i_projectOwner, amount, "");
     }
 
     function tokenURI(
@@ -137,11 +133,6 @@ contract SoonanTsoor is
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
 
-    // returns the amount of tokens a address has
-    function getBalanceOf(address account) public view returns (uint256) {
-        return balanceOf(account);
-    }
-
     // returns list of nfts of this function caller
     function getMyNfts() public view returns (string[] memory) {
         address owner = msg.sender;
@@ -157,9 +148,17 @@ contract SoonanTsoor is
         }
         return listOfTokenUris;
     }
+}
 
-    // returns the amount of tokens sold
-    function getSoldTokens() public view returns (uint256) {
-        return (_tokenIdCounter.current() - 1);
+contract TransferEth {
+    function transferEth(address payable _to) public payable /*  */ {
+        (bool sent /* bytes memory data */, ) = _to.call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
     }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
 }

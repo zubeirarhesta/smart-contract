@@ -31,6 +31,8 @@ contract FractionToken is
     // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner) - selesai
     // 4. Staking token untuk memberikan token rewards - selesai
     // 5. Bisa di-redeem untuk pembayaran off-chain
+    TransferEth internal tfEth = new TransferEth();
+
     address public NFTAddress;
     uint256 public NFTId;
     address public NFTOwner;
@@ -49,6 +51,8 @@ contract FractionToken is
     mapping(address => bool) isHolding;
     mapping(uint256 => address) public ownerOf;
     mapping(uint256 => uint256) public supplyOf;
+    mapping(uint256 => uint256) public maxSupplyOf;
+    mapping(address => uint256) private _balances;
 
     constructor(
         address _NFTAddress,
@@ -65,8 +69,23 @@ contract FractionToken is
         RoyaltyPercentage = _royaltyPercentage;
         supply = _supply;
 
+        for(uint i = 1; i <= 5000; i++){
+            maxSupplyOf[i] = 1000;
+        }
         contractDeployer = msg.sender;
         _mint(_NFTOwner, supply);
+    }
+
+    modifier isSupplyEnough(uint256 _nftId, uint256 _amount){
+        isEnough(_nftId, _amount);
+        _;
+    }
+
+    function isEnough(uint256 _nftId, uint256 _amount) public view{
+        require(
+            _amount <= maxSupplyOf[_nftId], //somehow this 'require' only reverts with error once supplyOf[_nftId] > supply the second time
+            "Exceed the amount of available supplies"
+        );
     }
 
     function pause() public {
@@ -83,14 +102,16 @@ contract FractionToken is
 
     function transferTo(
         address _to,
-        uint256 _amount,
-        uint256 _nftId
+        uint256 _nftId,
+        uint256 _amount
     ) public returns (bool) {
         //calculate royalty fee
+        require(_amount <= balanceOf(msg.sender));
         uint royaltyFee = (_amount * RoyaltyPercentage) / 100;
         uint afterRoyaltyFee = _amount - royaltyFee;
         address owner = _msgSender();
-
+        
+    
         //send royalty fee to owner
         _transfer(owner, NFTOwner, royaltyFee);
         //send rest to receiver
@@ -135,14 +156,12 @@ contract FractionToken is
 
     function purchase(
         uint256 _nftId,
-        uint256 _tokens
-    ) public payable whenNotPaused nonReentrant {
-        require(
-            supplyOf[_nftId] <= supply, //somehow this require only reverts with error once supplyOf[_nftId] > supply the second time
-            "Exceed the amount of available supplies"
-        );
+        uint256 _amountToBuy
+    ) public payable whenNotPaused nonReentrant isSupplyEnough(_nftId, _amountToBuy){
+        //tfEth.transferEth{value: msg.value}(payable(address(this)));
+        maxSupplyOf[_nftId] = maxSupplyOf[_nftId] - _amountToBuy;
+        setSoldTokens(_amountToBuy, _nftId);
         setOwnerOf(_nftId, msg.sender);
-        setSoldTokens(_tokens, _nftId);
         tokenOwners.push(msg.sender);
     }
 
@@ -157,13 +176,9 @@ contract FractionToken is
         require(sent, "Failed to send Ether");
     }
 
-    /* function withdraw(uint256 _amount) public payable {
-        _transfer(_treasuryWallet, projectOwner, _amount);
+    /* function withdraw(uint256 _amount) public payable onlyOwner {
+        payable(msg.sender).transfer(_amount*10**18);
     } */
-
-    /* function setNewNFTOwner(address _newNFTOwner) external {
-        NFTOwner = _newNFTOwner;
-    } */ 
 
     function setNewTokenPrice(uint256 _newTokenPrice) external {
         tokenPrice = _newTokenPrice;
@@ -190,10 +205,6 @@ contract FractionToken is
     ) internal override whenNotPaused {
         super._beforeTokenTransfer(_from, _to, _amount);
     }
-
-    /* function _transferUsdc(uint256 _amountOfUsdc) private {
-        transfer(_treasuryWallet, _amountOfUsdc);
-    } */
 
     function setSoldTokens(uint256 _amount, uint256 _nftId) private {
         uint256 currentSoldTokens = supplyOf[_nftId];
@@ -230,7 +241,7 @@ contract FractionToken is
     }
 
     function getSoldTokens(uint256 _nftId) public view returns (uint256) {
-        return supplyOf[_nftId]; // or should be without taking from param like this? -> supplyOf[NFTId],
+        return supplyOf[_nftId]; 
     }
 
     function getBalanceOf(address _account) public view returns (uint256) {
@@ -248,4 +259,20 @@ contract FractionToken is
     function getOwner() public view returns(address){
         return owner();
     }
+}
+
+contract TransferEth {
+    function transferEth(address payable _to) public payable /*  */ {
+        (bool sent /* bytes memory data */, ) = _to.call{
+            value: msg.value
+        }("");
+        require(sent, "Failed to send Ether");
+    }
+
+    // Function to receive Ether. msg.data must be empty
+    receive() external payable {}
+
+    // Fallback function is called when msg.data is not empty
+    fallback() external payable {}
+
 }
