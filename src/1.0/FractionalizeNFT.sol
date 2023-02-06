@@ -68,15 +68,14 @@ contract FractionalizeNFT is IERC721Receiver {
 
         AccessDeposits[msg.sender].Deposit[index].hasFractionalized = true;
 
-        FractionToken fractionToken = new FractionToken(
-            _nftContractAddress,
-            _nftId,
-            msg.sender,
-            _royaltyPercentage,
-            _supply,
-            _tokenName,
-            _tokenTicker
-        );
+        FractionToken fractionToken = new FractionToken();
+        /* _nftContractAddress, */
+        /* _nftId, */
+        /* msg.sender, */
+        /* _royaltyPercentage, */
+        /* _supply, */
+        /* _tokenName, */
+        /* _tokenTicker */
 
         AccessDeposits[msg.sender]
             .Deposit[index]

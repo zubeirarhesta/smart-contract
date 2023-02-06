@@ -13,3 +13,6 @@
 [submodule "lib/chugsplash-foundry"]
 	path = lib/chugsplash-foundry
 	url = https://github.com/chugsplash/chugsplash-foundry
+[submodule "lib/solidity-stringutils"]
+	path = lib/solidity-stringutils
+	url = https://github.com/Arachnid/solidity-stringutils

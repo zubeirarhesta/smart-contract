@@ -1,0 +1,91 @@
+{
+    "options": {
+        "projectName": "Soonan Tsoor"
+    },
+    "contracts": {
+        "Soonan Tsoor NFT": {
+            "contract": "NFTContract",
+            "variables": {
+                "_name": "SoonanTsoor",
+                "_symbol": "SNSR",
+                "_owners": {},
+                "_balances": {},
+                "_tokenApprovals": {},
+                "_operatorApprovals": {},
+                "_tokenURIs": {},
+                "_paused": false,
+                "_owner": "0x1111111111111111111111111111111111111111",
+                "NAME": "SoonanTsoor",
+                "SYMBOL": "SNSR",
+                "_listOfTokensOwnedBy": {},
+                "ownerOfThis": {},
+                "_treasuryWallet": "0x1111111111111111111111111111111111111111",
+                "projectOwner": "0x1111111111111111111111111111111111111111",
+                "tokenUris": [],
+                "base": "https://nft.soonantsoor.com"
+            }
+        },
+        "Soonan Tsoor ERC20": {
+            "contract": "FractionToken",
+            "variables": {
+                "fractionToken": "7fdfb1ef01b5b4bc59f5d7ff2530f2dc4e1889e6",
+                "_allowances": {},
+                "_totalSupply": 0,
+                "_name": "SoonanTsoor",
+                "_symbol": "WSNSR",
+                "_paused": false,
+                "_owner": "7fdfb1ef01b5b4bc59f5d7ff2530f2dc4e1889e6",
+                "_status": 1,
+                "tfEth": "0x1111111111111111111111111111111111111111",
+                "NFTAddress": "0x1111111111111111111111111111111111111111",
+                "NFTId": 1,
+                "NFTOwner": "0x1111111111111111111111111111111111111111",
+                "RoyaltyPercentage": 10,
+                "supply": 1000,
+                "_soldToken": 0,
+                "tokenPrice": 0,
+                "tokenOwners": [],
+                "_treasuryWallet": "0x1111111111111111111111111111111111111111",
+                "projectOwner": "0x1111111111111111111111111111111111111111",
+                "contractDeployer": "0x7Fdfb1eF01b5B4bC59F5D7FF2530f2dC4E1889E6",
+                "isHolding": {},
+                "ownerOf": {},
+                "supplyOf": {},
+                "maxSupplyOf": {},
+                "_balances": {},
+                "tokenName": "SoonanTsoor",
+                "tokenTicker": "WSNSR",
+                "original": "0x7Fdfb1eF01b5B4bC59F5D7FF2530f2dC4E1889E6"
+            }
+        },
+        "Transfer Contract": {
+            "contract": "TransferEth",
+            "variables": {
+                "num": 0
+            }
+        },
+        "Staking Contract": {
+            "contract": "StakeSoonanTsoor",
+            "variables": {
+                "_paused": false,
+                "_owner": "0x1111111111111111111111111111111111111111",
+                "_status": 1,
+                "snsrToken": "0x1111111111111111111111111111111111111111",
+                "planDuration": 2592000,
+                "_planExpired": 15552000,
+                "interestRate": 32,
+                "planExpired": 0,
+                "totalStakers": 0,
+                "stakeInfos": {},
+                "addressStaked": {}
+            }
+        },
+        "Fractionalizer Contract": {
+            "contract": "FractionalizeNFT",
+            "variables": {
+                "AccessDeposits": {},
+                "NftIndex": {}
+            }
+        }
+    }
+}

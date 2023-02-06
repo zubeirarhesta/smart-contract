@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./TransferEth.sol";
 
 contract FractionToken is
     ERC20,
@@ -19,18 +20,10 @@ contract FractionToken is
     // Bisa di-upgrade(menggunakan proxy) = yes
     // Token Suplai = 5000000 - selesai
     // Pembayaran = USDC
-    // Fungsi:
-    // 1. burn, - selesai
-    // 2. transfer, - selesai
-    // 3. staking, dan - selesai
-    // 4. transfer ownership - selesai
     // Fitur:
-    // 1. Berapa jumlah token yang sudah terjual --> getSoldTokens() - selesai
-    // 2. Mengubah harga token --> updateTokebPrice(uint256 newTokenPrice) - selesai
-    // 3. Merubah alamat wallet --> updateTreasuryWallet(address newTreasuryWallet) - selesai
-    // 3. Withdraw uang ke wallet pemilik proyek --> withdraw(uint256 amount, address projectOwner) - selesai
     // 4. Staking token untuk memberikan token rewards - selesai
     // 5. Bisa di-redeem untuk pembayaran off-chain
+    FractionToken public fractionToken;
     TransferEth internal tfEth = new TransferEth();
 
     address public NFTAddress;
@@ -41,7 +34,7 @@ contract FractionToken is
 
     uint256 public supply;
     uint256 private _soldToken;
-    uint256 tokenPrice;
+    uint256 public tokenPrice;
     address[] tokenOwners;
 
     address private _treasuryWallet;
@@ -54,34 +47,30 @@ contract FractionToken is
     mapping(uint256 => uint256) public maxSupplyOf;
     mapping(address => uint256) private _balances;
 
-    constructor(
-        address _NFTAddress,
-        uint256 _NFTId,
-        address _NFTOwner,
-        uint256 _royaltyPercentage,
-        uint256 _supply,
-        string memory _tokenName,
-        string memory _tokenTicker
-    ) ERC20(_tokenName, _tokenTicker) {
-        NFTAddress = _NFTAddress;
-        NFTId = _NFTId;
-        NFTOwner = _NFTOwner;
-        RoyaltyPercentage = _royaltyPercentage;
-        supply = _supply;
+    string tokenName;
+    string tokenTicker;
 
-        for(uint i = 1; i <= 5000; i++){
-            maxSupplyOf[i] = 1000;
-        }
-        contractDeployer = msg.sender;
-        _mint(_NFTOwner, supply);
+    address private original;
+
+    constructor() ERC20(tokenName, tokenTicker) {
+        NFTAddress = 0x1111111111111111111111111111111111111111;
+        NFTId = 5000;
+        NFTOwner = 0x1111111111111111111111111111111111111111;
+        RoyaltyPercentage = 10;
+        supply = 1000;
+
+        
+        /* _mint(msg.sender, supply); */
     }
+    
+    
 
     modifier isSupplyEnough(uint256 _nftId, uint256 _amount){
-        isEnough(_nftId, _amount);
+        _isEnough(_nftId, _amount);
         _;
     }
 
-    function isEnough(uint256 _nftId, uint256 _amount) public view{
+    function _isEnough(uint256 _nftId, uint256 _amount) private view{
         require(
             _amount <= maxSupplyOf[_nftId], //somehow this 'require' only reverts with error once supplyOf[_nftId] > supply the second time
             "Exceed the amount of available supplies"
@@ -100,16 +89,22 @@ contract FractionToken is
         _mint(_to, _amount);
     }
 
+    function makeMaxSupply() public {
+        for(uint i = 1; i <= 5000; i++){
+            maxSupplyOf[i] = supply;
+        }
+    }
+
     function transferTo(
         address _to,
         uint256 _nftId,
         uint256 _amount
     ) public returns (bool) {
         //calculate royalty fee
-        require(_amount <= balanceOf(msg.sender));
+        require(_amount <= balanceOf(NFTOwner));
         uint royaltyFee = (_amount * RoyaltyPercentage) / 100;
         uint afterRoyaltyFee = _amount - royaltyFee;
-        address owner = _msgSender();
+        address owner = NFTOwner;
         
     
         //send royalty fee to owner
@@ -158,11 +153,12 @@ contract FractionToken is
         uint256 _nftId,
         uint256 _amountToBuy
     ) public payable whenNotPaused nonReentrant isSupplyEnough(_nftId, _amountToBuy){
-        //tfEth.transferEth{value: msg.value}(payable(address(this)));
+        tfEth.transferEth{value: msg.value}(payable(address(this)));
+        transferTo(msg.sender, _nftId, _amountToBuy);
         maxSupplyOf[_nftId] = maxSupplyOf[_nftId] - _amountToBuy;
-        setSoldTokens(_amountToBuy, _nftId);
+        /* setSoldTokens(_amountToBuy, _nftId);
         setOwnerOf(_nftId, msg.sender);
-        tokenOwners.push(msg.sender);
+        tokenOwners.push(msg.sender); */
     }
 
     function burn(uint256 _amount) public virtual override {
@@ -252,7 +248,7 @@ contract FractionToken is
         return tokenPrice;
     }
 
-    function getTokenOwners() public view onlyOwner returns (address[] memory) {
+    function getTokenOwners() public view returns (address[] memory) {
         return tokenOwners;
     }
 
@@ -261,18 +257,3 @@ contract FractionToken is
     }
 }
 
-contract TransferEth {
-    function transferEth(address payable _to) public payable /*  */ {
-        (bool sent /* bytes memory data */, ) = _to.call{
-            value: msg.value
-        }("");
-        require(sent, "Failed to send Ether");
-    }
-
-    // Function to receive Ether. msg.data must be empty
-    receive() external payable {}
-
-    // Fallback function is called when msg.data is not empty
-    fallback() external payable {}
-
-}

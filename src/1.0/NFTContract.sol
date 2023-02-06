@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract SoonanTsoor is
+contract NFTContract is
     ERC721,
     ERC721URIStorage,
     Pausable,
@@ -16,25 +16,11 @@ contract SoonanTsoor is
     ERC721Burnable
 {
     // Bisa di-upgrade(menggunakan proxy) = yes - almost
-    // Token Suplai = 5100 - selesai
     // Bisa difraksi = ya
     // Pembayaran = USDC
-    // Fungsi:
-    // 1. burn, - selesai
-    // 2. transfer, - selesai
-    // 3. staking, dan
-    // 4. transfer ownership - selesai
     // Fitur:
-    // 1. Melihat jumlah NFT yang dimiliki wallet tertentu - selesai
-    // 2. Melihat daftar NFT yang dimiliki dia sendiri - selesai
     // 3. Melihat / membeli NFT di Opensea/Nftfy
-    // 4. Berapa jumlah token yang sudah terjual - selesai
-    // 5. Withdraw uang ke wallet pemilik proyek - selesai
     // 6. Bisa di-redeem untuk pembayaran off-chain
-    // 7. Merubah base URI - selesai
-    using Counters for Counters.Counter;
-
-    Counters.Counter private _tokenIdCounter;
 
     mapping(address => uint256[]) private _listOfTokensOwnedBy;
     mapping(uint256 => address) ownerOfThis;
@@ -43,8 +29,8 @@ contract SoonanTsoor is
     address projectOwner;
 
     string[] public tokenUris;
-    string private constant NAME = "SoonanTsoor";
-    string private constant SYMBOL = "SNSR";
+    string NAME = "SoonanTsoor";
+    string SYMBOL = "SNSR";
     string public base = "https://nft.soonantsoor.com";
 
     constructor() ERC721(NAME, SYMBOL) {
@@ -148,17 +134,4 @@ contract SoonanTsoor is
         }
         return listOfTokenUris;
     }
-}
-
-contract TransferEth {
-    function transferEth(address payable _to) public payable /*  */ {
-        (bool sent /* bytes memory data */, ) = _to.call{value: msg.value}("");
-        require(sent, "Failed to send Ether");
-    }
-
-    // Function to receive Ether. msg.data must be empty
-    receive() external payable {}
-
-    // Fallback function is called when msg.data is not empty
-    fallback() external payable {}
 }

@@ -48,12 +48,12 @@ contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard {
     mapping(address => StakeInfo) public stakeInfos;
     mapping(address => bool) public addressStaked;
 
-    constructor(Token _tokenAddress) {
-        require(
+    constructor() /* Token _tokenAddress */ {
+        /* require(
             address(_tokenAddress) != address(0),
             "Token Address cannot be address 0"
         );
-        snsrToken = _tokenAddress;
+        snsrToken = _tokenAddress; */
         planExpired = block.timestamp + _planExpired;
         totalStakers = 0;
     }
