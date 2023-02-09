@@ -217,7 +217,7 @@ contract TokenContract is
     //Fractionalize functions
 
     function createAllFractions(address _nftContractAddress) public {
-        for (uint256 i = 1; i <= 100; i++) {
+        for (uint256 i = 1; i <= 5000; i++) { //create all fractions from 5000 nft
             createFraction(_nftContractAddress, i);
         }
     }

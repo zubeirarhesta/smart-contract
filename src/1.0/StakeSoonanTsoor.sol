@@ -27,7 +27,7 @@ interface Token {
 contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard, ERC20 {
     Token snsrToken;
 
-    // 30 Days (365 * 24 * 60 * 60)
+    // 365 Days (365 * 24 * 60 * 60)
     uint256 public planDuration = 31536000;
 
     // 180 Days (180 * 24 * 60 * 60)
