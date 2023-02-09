@@ -2,4 +2,3 @@ ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 erc721A/=lib/erc7211A/contracts/
 @openzeppelin/=lib/openzeppelin-contracts
-chugsplash/=node_modules/@chugsplash/plugins/dist/contracts/

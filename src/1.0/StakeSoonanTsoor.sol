@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 interface Token {
     function transfer(
@@ -22,17 +24,16 @@ interface Token {
     ) external returns (uint256);
 }
 
-contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard {
+contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard, ERC20 {
     Token snsrToken;
 
-    // 30 Days (30 * 24 * 60 * 60)
-    uint256 public planDuration = 2592000;
+    // 30 Days (365 * 24 * 60 * 60)
+    uint256 public planDuration = 31536000;
 
     // 180 Days (180 * 24 * 60 * 60)
-    uint256 _planExpired = 15552000;
+    //uint256 _planExpired = 15552000;
 
-    uint8 public interestRate = 32;
-    uint256 public planExpired;
+    //uint256 public planExpired;
     uint8 public totalStakers;
 
     struct StakeInfo {
@@ -48,13 +49,13 @@ contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard {
     mapping(address => StakeInfo) public stakeInfos;
     mapping(address => bool) public addressStaked;
 
-    constructor() /* Token _tokenAddress */ {
-        /* require(
+    constructor(Token _tokenAddress) ERC20("TokenReward", "TRWRD") {
+        require(
             address(_tokenAddress) != address(0),
             "Token Address cannot be address 0"
         );
-        snsrToken = _tokenAddress; */
-        planExpired = block.timestamp + _planExpired;
+        snsrToken = _tokenAddress;
+        /* planExpired = block.timestamp + _planExpired; */
         totalStakers = 0;
     }
 
@@ -62,39 +63,8 @@ contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard {
         require(snsrToken.transfer(to, amount), "Token transfer failed!");
     }
 
-    function claimReward() external returns (bool) {
-        require(
-            addressStaked[_msgSender()] == true,
-            "You are not participated"
-        );
-        require(
-            stakeInfos[_msgSender()].endTS < block.timestamp,
-            "Stake Time is not over yet"
-        );
-        require(stakeInfos[_msgSender()].claimed == 0, "Already claimed");
-
-        uint256 stakeAmount = stakeInfos[_msgSender()].amount;
-        uint256 totalTokens = stakeAmount +
-            ((stakeAmount * interestRate) / 100);
-        stakeInfos[_msgSender()].claimed == totalTokens;
-        snsrToken.transfer(_msgSender(), totalTokens);
-
-        emit Claimed(_msgSender(), totalTokens);
-
-        return true;
-    }
-
-    function getTokenExpiry() external view returns (uint256) {
-        require(
-            addressStaked[_msgSender()] == true,
-            "You are not participated"
-        );
-        return stakeInfos[_msgSender()].endTS;
-    }
-
     function stakeToken(uint256 stakeAmount) external payable whenNotPaused {
-        require(stakeAmount > 0, "Stake amount should be correct");
-        require(block.timestamp < planExpired, "Plan Expired");
+        require(stakeAmount > 1000, "Stake amount should be correct");
         require(
             addressStaked[_msgSender()] == false,
             "You already participated"
@@ -116,6 +86,37 @@ contract StakeSoonanTsoor is Pausable, Ownable, ReentrancyGuard {
         });
 
         emit Staked(_msgSender(), stakeAmount);
+    }
+
+    function claimReward() external returns (bool) {
+        require(
+            addressStaked[_msgSender()] == true,
+            "You are not participated"
+        );
+        require(
+            (stakeInfos[_msgSender()].endTS - stakeInfos[_msgSender()].endTS) >=
+                planDuration,
+            "Stake Time is not over yet"
+        );
+        require(stakeInfos[_msgSender()].claimed == 0, "Already claimed");
+
+        uint256 stakeAmount = stakeInfos[_msgSender()].amount;
+        _mint(address(this), 25000000);
+        uint256 totalTokens = stakeAmount + 25000000;
+        stakeInfos[_msgSender()].claimed == totalTokens;
+        snsrToken.transfer(_msgSender(), totalTokens);
+
+        emit Claimed(_msgSender(), totalTokens);
+
+        return true;
+    }
+
+    function getTokenExpiry() external view returns (uint256) {
+        require(
+            addressStaked[_msgSender()] == true,
+            "You are not participated"
+        );
+        return stakeInfos[_msgSender()].endTS;
     }
 
     function pause() external onlyOwner {

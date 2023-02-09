@@ -17,10 +17,8 @@ contract NFTContract is
 {
     // Bisa di-upgrade(menggunakan proxy) = yes - almost
     // Bisa difraksi = ya
-    // Pembayaran = USDC
     // Fitur:
-    // 3. Melihat / membeli NFT di Opensea/Nftfy
-    // 6. Bisa di-redeem untuk pembayaran off-chain
+    // 3. Melihat / membeli NFT di Opensea/Nftfy - purchase
 
     mapping(address => uint256[]) private _listOfTokensOwnedBy;
     mapping(uint256 => address) ownerOfThis;
@@ -29,19 +27,13 @@ contract NFTContract is
     address projectOwner;
 
     string[] public tokenUris;
-    string NAME = "SoonanTsoor";
-    string SYMBOL = "SNSR";
+
     string public base = "https://nft.soonantsoor.com";
 
-    constructor() ERC721(NAME, SYMBOL) {
+    constructor(address _fractionalizer) ERC721("SoonanTsoor", "SNSR") {
+        setApprovalForAll(_fractionalizer, true);
         _baseURI();
     }
-
-    event TransferTokenId(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _tokenId
-    );
 
     function setBaseURI(
         string memory _newBaseUri
@@ -62,17 +54,22 @@ contract NFTContract is
         _unpause();
     }
 
-    function safeMint() public {
+    function safeMintAll() public {
         require(
-            owner() == address(this),
+            owner() == msg.sender,
             "This function is only callable by Soonan Tsoor"
         );
-        string memory tokenUri;
-        for (uint i = 1; i <= 5000; i++) {
-            _safeMint(msg.sender, i);
-            tokenUri = tokenURI(i);
-            tokenUris[i] = tokenUri;
+        /* string memory tokenUri; */
+        for (uint i = 1; i <= 5100; i++) {
+            // should be 5100
+            safeMint(i);
+            /* tokenUri = tokenURI(i);
+            tokenUris[i] = tokenUri;*/
         }
+    }
+
+    function safeMint(uint256 _tokenId) public {
+        _safeMint(msg.sender, _tokenId);
     }
 
     function safeTransfer(address _to, uint256 _tokenId) public {
@@ -119,8 +116,8 @@ contract NFTContract is
 
     // Fungsi-fungsi berikut adalah fungsi view / pure / getter
 
-    // returns list of nfts of this function caller
-    function getMyNfts() public view returns (string[] memory) {
+    // returns list of nfts of this function caller -- needs REVIEW
+    function getNFT() public view returns (string[] memory) {
         address owner = msg.sender;
         string[] memory listOfTokenUris = new string[](
             _listOfTokensOwnedBy[owner].length
