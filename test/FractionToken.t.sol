@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import "src/1.0/FractionToken.sol";
+import "src/1.0/TokenContract.sol";
 
 contract FractionTokenTest is Test {
     /* FractionToken fractionTokenProxy;
